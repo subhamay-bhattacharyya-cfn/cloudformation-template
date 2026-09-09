@@ -18,7 +18,6 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
   STACK_NAME: ${{ github.event.repository.name }}
   AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-  OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME }}
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 permissions:
@@ -42,11 +41,12 @@ jobs:
         run: |
           echo "aws-region=${{ env.AWS_REGION }}" >> $GITHUB_OUTPUT
           echo "aws-account-id=${{ env.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-          echo "oidc-role-name=${{ env.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
+          echo "oidc-role-name=${{ vars.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
           echo "cfn-templates-s3-bucket=${{ env.CFN_TEMPLATES_S3_BUCKET }}" >> $GITHUB_OUTPUT
 
   validate-templates:
     name: Validate CloudFormation Templates
+    needs: get-config
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -55,20 +55,20 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v6.2.4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.OIDC_ROLE_NAME }}
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
+          aws-region: ${{ needs.get-config.outputs.aws-region }}
 
       - name: Validate S3 Bucket Template
         run: |
           aws cloudformation validate-template \
             --template-body file://templates/s3-bucket.yaml \
-            --region ${{ env.AWS_REGION }}
+            --region ${{ needs.get-config.outputs.aws-region }}
 
       - name: Validate S3 Bucket Policy Template
         run: |
           aws cloudformation validate-template \
             --template-body file://templates/s3-bucket-policy.yaml \
-            --region ${{ env.AWS_REGION }}
+            --region ${{ needs.get-config.outputs.aws-region }}
 
   # ========== DEPLOYMENT PHASE ==========
   deploy-bucket:
