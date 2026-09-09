@@ -22,7 +22,6 @@ jobs:
   get-config:
     name: Get Environment Configuration
     runs-on: ubuntu-latest
-    environment: ci
     outputs:
       environment: ${{ env.DEPLOY_ENV }}
       aws-region: ${{ steps.config.outputs.aws-region }}
