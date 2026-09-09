@@ -12,8 +12,10 @@ on:
     branches:
       # - main
       - feature/**
+      - bug/**
     paths:
       - 'templates/**'
+      - .github/workflows/ci.yaml
 
 env:
   DEPLOY_ENV: ${{ github.event.inputs.environment }}
