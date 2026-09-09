@@ -13,10 +13,7 @@ on:
       - 'parameters/**'
       - '.github/workflows/ci.yaml'
 
-env:
-  DEPLOY_ENV: ci
-  # Allowed environment values: ci, devl, test, prod
-  # To deploy to a different environment, update DEPLOY_ENV above
+
 
 jobs:
   get-config:
