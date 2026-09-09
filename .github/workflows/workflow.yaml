@@ -14,9 +14,9 @@ on:
         default: false
         type: boolean
     secrets:
-      github_token:
+      gh_token:
         description: 'GitHub token for API access'
-        required: true
+        required: false
 
 env:
   NODE_VERSION: '20'
