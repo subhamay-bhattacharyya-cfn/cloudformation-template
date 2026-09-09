@@ -22,12 +22,13 @@ jobs:
   get-config:
     name: Get Environment Configuration
     runs-on: ubuntu-latest
+    environment: ci
     steps:
       - id: config
         run: |
-          echo "aws-region=${{ vars.AWS_REGION }}" >> $GITHUB_OUTPUT
-          echo "aws-account-id=${{ vars.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-          echo "oidc-role-name=${{ vars.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
+          echo "aws-region=${{ env.AWS_REGION }}" >> $GITHUB_OUTPUT
+          echo "aws-account-id=${{ env.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+          echo "oidc-role-name=${{ env.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
 
 
   # validate-templates:
