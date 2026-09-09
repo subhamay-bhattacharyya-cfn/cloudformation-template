@@ -8,12 +8,12 @@ on:
         required: false
         default: 'ci'
         type: string
-  # push:
-  #   branches:
-  #     - main
-  #     - feature/**
-  #   paths:
-  #     - 'infra/**'
+  push:
+    branches:
+      # - main
+      - feature/**
+    paths:
+      - 'templates/**'
 
 env:
   DEPLOY_ENV: ${{ github.event.inputs.environment }}
@@ -35,6 +35,7 @@ jobs:
       - id: config
         run: |
           echo "Debug: Getting environment configuration"
+          echo "DEPLOY_ENV: ${{ env.DEPLOY_ENV }}"
           echo "AWS_REGION: ${{ vars.AWS_REGION }}"
           echo "AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}"
           echo "OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME }}"
