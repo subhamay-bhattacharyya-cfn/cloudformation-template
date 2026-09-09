@@ -28,6 +28,10 @@ jobs:
       - id: config
         run: |
           echo "Debug: Getting environment configuration"
+          echo "AWS_REGION: ${{ vars.AWS_REGION }}"
+          echo "AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}"
+          echo "OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME }}"
+          echo "CFN_TEMPLATES_S3_BUCKET: ${{ vars.CFN_TEMPLATES_S3_BUCKET }}"
           # echo "aws-region=${{ vars.AWS_REGION }}" >> $GITHUB_OUTPUT
           # echo "aws-account-id=${{ vars.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
           # echo "oidc-role-name=${{ vars.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
