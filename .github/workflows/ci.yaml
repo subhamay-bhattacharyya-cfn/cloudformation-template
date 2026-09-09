@@ -11,34 +11,21 @@ on:
       - 'templates/**'
       - .github/workflows/ci.yaml
 
-# env:
-#   DEPLOY_ENV: ci
-  # Allowed environment values: ci, devl, test, prod
 
 jobs:
   get-config:
     name: Get Environment Configuration
     runs-on: ubuntu-latest
     environment: ci
-    # outputs:
-      # environment: ${{ env.DEPLOY_ENV }}
-      # aws-region: ${{ steps.config.outputs.aws-region }}
-      # aws-account-id: ${{ steps.config.outputs.aws-account-id }}
-      # oidc-role-name: ${{ steps.config.outputs.oidc-role-name }}
-      # cfn-templates-s3-bucket: ${{ steps.config.outputs.cfn-templates-s3-bucket }}
     steps:
       - id: config
         run: |
           echo "Debug: Getting environment configuration"
-          echo "DEPLOY_ENV: ${{ env.DEPLOY_ENV }}"
-          echo "AWS_REGION: ${{ env.AWS_REGION }}"
-          echo "AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}"
+          echo "AWS_REGION: ${{ vars.AWS_REGION }}"
+          echo "AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}"
           echo "OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME }}"
-          echo "CFN_TEMPLATES_S3_BUCKET: ${{ vars.CFN_TEMPLATES_S3_BUCKET }}"
-          # echo "aws-region=${{ vars.AWS_REGION }}" >> $GITHUB_OUTPUT
-          # echo "aws-account-id=${{ vars.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-          # echo "oidc-role-name=${{ vars.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
-          # echo "cfn-templates-s3-bucket=${{ vars.CFN_TEMPLATES_S3_BUCKET }}" >> $GITHUB_OUTPUT
+
+
 
   # deploy:
   #   needs: get-config
