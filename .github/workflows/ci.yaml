@@ -30,6 +30,7 @@ jobs:
       aws-region: ${{ steps.config.outputs.aws-region }}
       aws-account-id: ${{ steps.config.outputs.aws-account-id }}
       oidc-role-name: ${{ steps.config.outputs.oidc-role-name }}
+      cfn-templates-s3-bucket: ${{ steps.config.outputs.cfn-templates-s3-bucket }}
       cfn-s3-bucket-stack: ${{ steps.config.outputs.cfn-s3-bucket-stack }}
       cfn-s3-bucket-policy-stack: ${{ steps.config.outputs.cfn-s3-bucket-policy-stack }}
     steps:
@@ -44,6 +45,7 @@ jobs:
             echo "aws-region=${{ env.AWS_REGION }}"
             echo "aws-account-id=${{ env.AWS_ACCOUNT_ID }}"
             echo "oidc-role-name=${{ env.OIDC_ROLE_NAME }}"
+            echo "cfn-templates-s3-bucket=${{ env.CFN_TEMPLATES_S3_BUCKET }}"
             echo "cfn-s3-bucket-stack=${{ env.S3_BUCKET_STACK_NAME }}"
             echo "cfn-s3-bucket-policy-stack=${{ env.S3_BUCKET_POLICY_STACK_NAME }}"
           } >> "$GITHUB_OUTPUT"
@@ -61,7 +63,7 @@ jobs:
       aws-region: ${{ needs.get-config.outputs.aws-region }}
       aws-account-id: ${{ needs.get-config.outputs.aws-account-id }}
       oidc-role-name: ${{ needs.get-config.outputs.oidc-role-name }}
-      cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-s3-bucket-stack }}
+      cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-templates-s3-bucket }}
       stack-name: ${{ needs.get-config.outputs.cfn-s3-bucket-stack }}
       template-file: templates/s3-bucket.yaml
       parameters-file: parameters/parameters.json
