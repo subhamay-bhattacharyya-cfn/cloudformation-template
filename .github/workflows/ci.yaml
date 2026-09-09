@@ -66,4 +66,4 @@ jobs:
       cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-templates-s3-bucket }}
       stack-name: ${{ needs.get-config.outputs.cfn-s3-bucket-stack }}
       template-file: templates/s3-bucket.yaml
-      parameters-file: parameters/parameters.json
+      parameters-file: templates/parameters.json
