@@ -18,29 +18,30 @@ jobs:
     name: Get Environment Configuration
     runs-on: ubuntu-latest
     environment: ci
-    outputs:
-      environment: ${{ env.DEPLOY_ENV }}
-      aws-region: ${{ steps.config.outputs.aws-region }}
-      aws-account-id: ${{ steps.config.outputs.aws-account-id }}
-      oidc-role-name: ${{ steps.config.outputs.oidc-role-name }}
-      cfn-templates-s3-bucket: ${{ steps.config.outputs.cfn-templates-s3-bucket }}
+    # outputs:
+      # environment: ${{ env.DEPLOY_ENV }}
+      # aws-region: ${{ steps.config.outputs.aws-region }}
+      # aws-account-id: ${{ steps.config.outputs.aws-account-id }}
+      # oidc-role-name: ${{ steps.config.outputs.oidc-role-name }}
+      # cfn-templates-s3-bucket: ${{ steps.config.outputs.cfn-templates-s3-bucket }}
     steps:
       - id: config
         run: |
-          echo "aws-region=${{ vars.AWS_REGION }}" >> $GITHUB_OUTPUT
-          echo "aws-account-id=${{ vars.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-          echo "oidc-role-name=${{ vars.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
-          echo "cfn-templates-s3-bucket=${{ vars.CFN_TEMPLATES_S3_BUCKET }}" >> $GITHUB_OUTPUT
+          echo "Debug: Getting environment configuration"
+          # echo "aws-region=${{ vars.AWS_REGION }}" >> $GITHUB_OUTPUT
+          # echo "aws-account-id=${{ vars.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+          # echo "oidc-role-name=${{ vars.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
+          # echo "cfn-templates-s3-bucket=${{ vars.CFN_TEMPLATES_S3_BUCKET }}" >> $GITHUB_OUTPUT
 
-  deploy:
-    needs: get-config
-    uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.0.0
-    with:
-      environment: ${{ needs.get-config.outputs.environment }}
-      aws-region: ${{ needs.get-config.outputs.aws-region }}
-      aws-account-id: ${{ needs.get-config.outputs.aws-account-id }}
-      oidc-role-name: ${{ needs.get-config.outputs.oidc-role-name }}
-      cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-templates-s3-bucket }}
-      stack-name: ${{ github.event.repository.name }}
-      template-file: infra/template.yaml
-      parameters-file: infra/parameters.json
+  # deploy:
+  #   needs: get-config
+  #   uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.0.0
+  #   with:
+  #     environment: ${{ needs.get-config.outputs.environment }}
+  #     aws-region: ${{ needs.get-config.outputs.aws-region }}
+  #     aws-account-id: ${{ needs.get-config.outputs.aws-account-id }}
+  #     oidc-role-name: ${{ needs.get-config.outputs.oidc-role-name }}
+  #     cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-templates-s3-bucket }}
+  #     stack-name: ${{ github.event.repository.name }}
+  #     template-file: infra/template.yaml
+  #     parameters-file: infra/parameters.json
