@@ -53,6 +53,7 @@ jobs:
     name: Deploy S3 Bucket Stack
     permissions:
       actions: write
+      contents: read
       id-token: write
     uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.0.0
     with:
