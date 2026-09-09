@@ -47,15 +47,15 @@ jobs:
             echo "cfn-s3-bucket-policy-stack=${{ env.S3_BUCKET_POLICY_STACK_NAME }}"
           } >> "$GITHUB_OUTPUT"
 
-  deploy:
-    needs: get-config
-    name: Deploy S3 Bucket Stack
-    uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.0.0
-    with:
-      environment: ${{ needs.get-config.outputs.environment }}
-      aws-region: ${{ needs.get-config.outputs.aws-region }}
-      aws-account-id: ${{ needs.get-config.outputs.aws-account-id }}
-      oidc-role-name: ${{ needs.get-config.outputs.oidc-role-name }}
-      cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-s3-bucket-stack }}
-      template-file: templates/s3-bucket.yaml
-      parameters-file: parameters/dev.json
+  # deploy:
+  #   needs: get-config
+  #   name: Deploy S3 Bucket Stack
+  #   uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.0.0
+  #   with:
+  #     environment: ${{ needs.get-config.outputs.environment }}
+  #     aws-region: ${{ needs.get-config.outputs.aws-region }}
+  #     aws-account-id: ${{ needs.get-config.outputs.aws-account-id }}
+  #     oidc-role-name: ${{ needs.get-config.outputs.oidc-role-name }}
+  #     cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-s3-bucket-stack }}
+  #     template-file: templates/s3-bucket.yaml
+  #     parameters-file: parameters/dev.json
