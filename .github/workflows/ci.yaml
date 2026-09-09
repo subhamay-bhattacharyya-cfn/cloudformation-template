@@ -2,15 +2,21 @@ name: Deploy CloudFormation Stack
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - feature/**
-    paths:
-      - 'infra/**'
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: false
+        default: 'ci'
+        type: string
+  # push:
+  #   branches:
+  #     - main
+  #     - feature/**
+  #   paths:
+  #     - 'infra/**'
 
 env:
-  DEPLOY_ENV: ci
+  DEPLOY_ENV: ${{ github.event.inputs.environment }}
   # Allowed environment values: ci, devl, test, prod
   # To deploy to a different environment, update DEPLOY_ENV above
 
@@ -18,7 +24,7 @@ jobs:
   get-config:
     name: Get Environment Configuration
     runs-on: ubuntu-latest
-    environment: ci
+    environment: ${{ github.event.inputs.environment }}
     # outputs:
       # environment: ${{ env.DEPLOY_ENV }}
       # aws-region: ${{ steps.config.outputs.aws-region }}
