@@ -15,280 +15,266 @@ on:
 
 env:
   DEPLOY_ENV: ci
-  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
-  STACK_NAME: ${{ github.event.repository.name }}
-  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-
-permissions:
-  id-token: write
-  contents: read
-  # Allowed environment values: ci, devl, test, stag, prod
+  # Allowed environment values: ci, devl, test, prod
   # To deploy to a different environment, update DEPLOY_ENV above
 
 jobs:
   get-config:
     name: Get Environment Configuration
     runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ env.DEPLOY_ENV }}
-      aws-region: ${{ steps.config.outputs.aws-region }}
-      aws-account-id: ${{ steps.config.outputs.aws-account-id }}
-      oidc-role-name: ${{ steps.config.outputs.oidc-role-name }}
-      cfn-templates-s3-bucket: ${{ steps.config.outputs.cfn-templates-s3-bucket }}
     steps:
       - id: config
         run: |
-          echo "aws-region=${{ env.AWS_REGION }}" >> $GITHUB_OUTPUT
-          echo "aws-account-id=${{ env.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+          echo "aws-region=${{ vars.AWS_REGION }}" >> $GITHUB_OUTPUT
+          echo "aws-account-id=${{ vars.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
           echo "oidc-role-name=${{ vars.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
-          echo "cfn-templates-s3-bucket=${{ env.CFN_TEMPLATES_S3_BUCKET }}" >> $GITHUB_OUTPUT
 
-  validate-templates:
-    name: Validate CloudFormation Templates
-    needs: get-config
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
 
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v6.2.4
-        with:
-          role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
-          aws-region: ${{ needs.get-config.outputs.aws-region }}
+  # validate-templates:
+  #   name: Validate CloudFormation Templates
+  #   needs: get-config
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v7.0.1
 
-      - name: Validate S3 Bucket Template
-        run: |
-          aws cloudformation validate-template \
-            --template-body file://templates/s3-bucket.yaml \
-            --region ${{ needs.get-config.outputs.aws-region }}
+  #     - name: Configure AWS credentials via OIDC
+  #       uses: aws-actions/configure-aws-credentials@v6.2.4
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
+  #         aws-region: ${{ needs.get-config.outputs.aws-region }}
 
-      - name: Validate S3 Bucket Policy Template
-        run: |
-          aws cloudformation validate-template \
-            --template-body file://templates/s3-bucket-policy.yaml \
-            --region ${{ needs.get-config.outputs.aws-region }}
+  #     - name: Validate S3 Bucket Template
+  #       run: |
+  #         aws cloudformation validate-template \
+  #           --template-body file://templates/s3-bucket.yaml \
+  #           --region ${{ needs.get-config.outputs.aws-region }}
 
-  # ========== DEPLOYMENT PHASE ==========
-  deploy-bucket:
-    name: Deploy S3 Bucket Stack
-    needs: [get-config, validate-templates]
-    runs-on: ubuntu-latest
-    environment: ci
-    outputs:
-      bucket-name: ${{ steps.deploy-bucket.outputs.bucket-name }}
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
+  #     - name: Validate S3 Bucket Policy Template
+  #       run: |
+  #         aws cloudformation validate-template \
+  #           --template-body file://templates/s3-bucket-policy.yaml \
+  #           --region ${{ needs.get-config.outputs.aws-region }}
 
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
-          aws-region: ${{ needs.get-config.outputs.aws-region }}
+  # # ========== DEPLOYMENT PHASE ==========
+  # deploy-bucket:
+  #   name: Deploy S3 Bucket Stack
+  #   needs: [get-config, validate-templates]
+  #   runs-on: ubuntu-latest
+  #   environment: ci
+  #   outputs:
+  #     bucket-name: ${{ steps.deploy-bucket.outputs.bucket-name }}
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v7.0.1
 
-      - name: Deploy S3 Bucket Stack
-        id: deploy-bucket
-        run: |
-          S3_BUCKET_STACK_NAME="${{ github.event.repository.name }}-bucket-${{ needs.get-config.outputs.environment }}"
+  #     - name: Configure AWS credentials via OIDC
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
+  #         aws-region: ${{ needs.get-config.outputs.aws-region }}
 
-          aws cloudformation deploy \
-            --template-file templates/s3-bucket.yaml \
-            --stack-name "$S3_BUCKET_STACK_NAME" \
-            --parameter-overrides file://parameters/${{ needs.get-config.outputs.environment }}.json \
-            --region ${{ needs.get-config.outputs.aws-region }} \
-            --no-fail-on-empty-changeset
+  #     - name: Deploy S3 Bucket Stack
+  #       id: deploy-bucket
+  #       run: |
+  #         S3_BUCKET_STACK_NAME="${{ github.event.repository.name }}-bucket-${{ needs.get-config.outputs.environment }}"
 
-          BUCKET_NAME=$(aws cloudformation describe-stacks \
-            --stack-name "$S3_BUCKET_STACK_NAME" \
-            --region ${{ needs.get-config.outputs.aws-region }} \
-            --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' \
-            --output text)
+  #         aws cloudformation deploy \
+  #           --template-file templates/s3-bucket.yaml \
+  #           --stack-name "$S3_BUCKET_STACK_NAME" \
+  #           --parameter-overrides file://parameters/${{ needs.get-config.outputs.environment }}.json \
+  #           --region ${{ needs.get-config.outputs.aws-region }} \
+  #           --no-fail-on-empty-changeset
 
-          echo "bucket-name=$BUCKET_NAME" >> $GITHUB_OUTPUT
-          echo "✅ Deployed bucket: $BUCKET_NAME"
+  #         BUCKET_NAME=$(aws cloudformation describe-stacks \
+  #           --stack-name "$S3_BUCKET_STACK_NAME" \
+  #           --region ${{ needs.get-config.outputs.aws-region }} \
+  #           --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' \
+  #           --output text)
 
-  deploy-policy:
-    name: Deploy S3 Bucket Policy Stack
-    needs: [get-config, deploy-bucket]
-    runs-on: ubuntu-latest
-    environment: ci
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #         echo "bucket-name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+  #         echo "✅ Deployed bucket: $BUCKET_NAME"
 
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
-          aws-region: ${{ needs.get-config.outputs.aws-region }}
+  # deploy-policy:
+  #   name: Deploy S3 Bucket Policy Stack
+  #   needs: [get-config, deploy-bucket]
+  #   runs-on: ubuntu-latest
+  #   environment: ci
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Deploy S3 Bucket Policy Stack
-        run: |
-          BUCKET_POLICY_STACK_NAME="${{ github.event.repository.name }}-policy-${{ needs.get-config.outputs.environment }}"
+  #     - name: Configure AWS credentials via OIDC
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
+  #         aws-region: ${{ needs.get-config.outputs.aws-region }}
 
-          aws cloudformation deploy \
-            --template-file templates/s3-bucket-policy.yaml \
-            --stack-name "$BUCKET_POLICY_STACK_NAME" \
-            --parameter-overrides \
-              file://parameters/policy-${{ needs.get-config.outputs.environment }}.json \
-              BucketName=${{ needs.deploy-bucket.outputs.bucket-name }} \
-            --region ${{ needs.get-config.outputs.aws-region }} \
-            --no-fail-on-empty-changeset
+  #     - name: Deploy S3 Bucket Policy Stack
+  #       run: |
+  #         BUCKET_POLICY_STACK_NAME="${{ github.event.repository.name }}-policy-${{ needs.get-config.outputs.environment }}"
 
-          echo "✅ Deployed policy for bucket: ${{ needs.deploy-bucket.outputs.bucket-name }}"
+  #         aws cloudformation deploy \
+  #           --template-file templates/s3-bucket-policy.yaml \
+  #           --stack-name "$BUCKET_POLICY_STACK_NAME" \
+  #           --parameter-overrides \
+  #             file://parameters/policy-${{ needs.get-config.outputs.environment }}.json \
+  #             BucketName=${{ needs.deploy-bucket.outputs.bucket-name }} \
+  #           --region ${{ needs.get-config.outputs.aws-region }} \
+  #           --no-fail-on-empty-changeset
 
-  notify-deployment-completion:
-    name: Notify Deployment Completion
-    needs: [deploy-bucket, deploy-policy]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Check Deployment Status
-        run: |
-          if [[ "${{ needs.deploy-bucket.result }}" == "success" && "${{ needs.deploy-policy.result }}" == "success" ]]; then
-            echo "✅ Deployment Phase Completed Successfully"
-            echo "🔄 Proceeding to cleanup phase..."
-            exit 0
-          else
-            echo "❌ Deployment Phase Failed"
-            exit 1
-          fi
+  #         echo "✅ Deployed policy for bucket: ${{ needs.deploy-bucket.outputs.bucket-name }}"
 
-  # ========== CLEANUP/DESTRUCTION PHASE ==========
-  destroy-policy-stack:
-    name: Destroy S3 Bucket Policy Stack
-    needs: [get-config, deploy-policy, deploy-bucket]
-    runs-on: ubuntu-latest
-    environment: ci
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # notify-deployment-completion:
+  #   name: Notify Deployment Completion
+  #   needs: [deploy-bucket, deploy-policy]
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   steps:
+  #     - name: Check Deployment Status
+  #       run: |
+  #         if [[ "${{ needs.deploy-bucket.result }}" == "success" && "${{ needs.deploy-policy.result }}" == "success" ]]; then
+  #           echo "✅ Deployment Phase Completed Successfully"
+  #           echo "🔄 Proceeding to cleanup phase..."
+  #           exit 0
+  #         else
+  #           echo "❌ Deployment Phase Failed"
+  #           exit 1
+  #         fi
 
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
-          aws-region: ${{ needs.get-config.outputs.aws-region }}
+  # # ========== CLEANUP/DESTRUCTION PHASE ==========
+  # destroy-policy-stack:
+  #   name: Destroy S3 Bucket Policy Stack
+  #   needs: [get-config, deploy-policy, deploy-bucket]
+  #   runs-on: ubuntu-latest
+  #   environment: ci
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Delete S3 Bucket Policy Stack
-        id: delete-policy
-        run: |
-          STACK_NAME="${{ github.event.repository.name }}-policy-${{ needs.get-config.outputs.environment }}"
-          echo "Stack name: $STACK_NAME"
-          echo "Region: ${{ needs.get-config.outputs.aws-region }}"
+  #     - name: Configure AWS credentials via OIDC
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
+  #         aws-region: ${{ needs.get-config.outputs.aws-region }}
 
-          # Check if stack exists
-          STACK_EXISTS=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}" 2>&1 || echo "")
+  #     - name: Delete S3 Bucket Policy Stack
+  #       id: delete-policy
+  #       run: |
+  #         STACK_NAME="${{ github.event.repository.name }}-policy-${{ needs.get-config.outputs.environment }}"
+  #         echo "Stack name: $STACK_NAME"
+  #         echo "Region: ${{ needs.get-config.outputs.aws-region }}"
 
-          if echo "$STACK_EXISTS" | grep -q "does not exist"; then
-            echo "⚠️  Policy stack does not exist, skipping deletion"
-            echo "POLICY_STACK_EXISTS=false" >> $GITHUB_ENV
-          else
-            echo "Deleting policy stack..."
-            aws cloudformation delete-stack --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}"
-            echo "POLICY_STACK_EXISTS=true" >> $GITHUB_ENV
-            echo "Policy stack deletion initiated"
-          fi
+  #         # Check if stack exists
+  #         STACK_EXISTS=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}" 2>&1 || echo "")
 
-      - name: Wait for policy stack deletion to complete
-        if: env.POLICY_STACK_EXISTS == 'true'
-        run: |
-          STACK_NAME="${{ github.event.repository.name }}-policy-${{ needs.get-config.outputs.environment }}"
-          echo "Waiting for policy stack deletion to complete..."
-          aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}"
-          echo "✅ Policy stack deletion completed successfully"
+  #         if echo "$STACK_EXISTS" | grep -q "does not exist"; then
+  #           echo "⚠️  Policy stack does not exist, skipping deletion"
+  #           echo "POLICY_STACK_EXISTS=false" >> $GITHUB_ENV
+  #         else
+  #           echo "Deleting policy stack..."
+  #           aws cloudformation delete-stack --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}"
+  #           echo "POLICY_STACK_EXISTS=true" >> $GITHUB_ENV
+  #           echo "Policy stack deletion initiated"
+  #         fi
 
-  destroy-bucket-stack:
-    name: Destroy S3 Bucket Stack
-    needs: [get-config, destroy-policy-stack, deploy-bucket]
-    runs-on: ubuntu-latest
-    environment: ci
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #     - name: Wait for policy stack deletion to complete
+  #       if: env.POLICY_STACK_EXISTS == 'true'
+  #       run: |
+  #         STACK_NAME="${{ github.event.repository.name }}-policy-${{ needs.get-config.outputs.environment }}"
+  #         echo "Waiting for policy stack deletion to complete..."
+  #         aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}"
+  #         echo "✅ Policy stack deletion completed successfully"
 
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
-          aws-region: ${{ needs.get-config.outputs.aws-region }}
+  # destroy-bucket-stack:
+  #   name: Destroy S3 Bucket Stack
+  #   needs: [get-config, destroy-policy-stack, deploy-bucket]
+  #   runs-on: ubuntu-latest
+  #   environment: ci
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Delete S3 Bucket Stack
-        id: delete-bucket
-        run: |
-          STACK_NAME="${{ github.event.repository.name }}-bucket-${{ needs.get-config.outputs.environment }}"
-          echo "Stack name: $STACK_NAME"
-          echo "Region: ${{ needs.get-config.outputs.aws-region }}"
+  #     - name: Configure AWS credentials via OIDC
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ needs.get-config.outputs.aws-account-id }}:role/${{ needs.get-config.outputs.oidc-role-name }}
+  #         aws-region: ${{ needs.get-config.outputs.aws-region }}
 
-          # Check if stack exists
-          STACK_EXISTS=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}" 2>&1 || echo "")
+  #     - name: Delete S3 Bucket Stack
+  #       id: delete-bucket
+  #       run: |
+  #         STACK_NAME="${{ github.event.repository.name }}-bucket-${{ needs.get-config.outputs.environment }}"
+  #         echo "Stack name: $STACK_NAME"
+  #         echo "Region: ${{ needs.get-config.outputs.aws-region }}"
 
-          if echo "$STACK_EXISTS" | grep -q "does not exist"; then
-            echo "⚠️  Bucket stack does not exist, skipping deletion"
-            echo "BUCKET_STACK_EXISTS=false" >> $GITHUB_ENV
-          else
-            echo "Deleting bucket stack..."
-            aws cloudformation delete-stack --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}"
-            echo "BUCKET_STACK_EXISTS=true" >> $GITHUB_ENV
-            echo "Bucket stack deletion initiated"
-          fi
+  #         # Check if stack exists
+  #         STACK_EXISTS=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}" 2>&1 || echo "")
 
-      - name: Wait for bucket stack deletion to complete
-        if: env.BUCKET_STACK_EXISTS == 'true'
-        run: |
-          STACK_NAME="${{ github.event.repository.name }}-bucket-${{ needs.get-config.outputs.environment }}"
-          echo "Waiting for bucket stack deletion to complete..."
-          aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}"
-          echo "✅ Bucket stack deletion completed successfully"
+  #         if echo "$STACK_EXISTS" | grep -q "does not exist"; then
+  #           echo "⚠️  Bucket stack does not exist, skipping deletion"
+  #           echo "BUCKET_STACK_EXISTS=false" >> $GITHUB_ENV
+  #         else
+  #           echo "Deleting bucket stack..."
+  #           aws cloudformation delete-stack --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}"
+  #           echo "BUCKET_STACK_EXISTS=true" >> $GITHUB_ENV
+  #           echo "Bucket stack deletion initiated"
+  #         fi
 
-  display-full-cycle-summary:
-    name: Display Full Cycle Summary
-    needs: [get-config, deploy-bucket, deploy-policy, destroy-policy-stack, destroy-bucket-stack]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Display full cycle summary
-        if: success()
-        run: |
-          echo "## ✅ CloudFormation Template Lifecycle Completed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployment Phase" >> $GITHUB_STEP_SUMMARY
-          echo "- **Bucket Stack:** \`${{ github.event.repository.name }}-bucket-${{ env.DEPLOY_ENV }}\` ✅ Deployed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Policy Stack:** \`${{ github.event.repository.name }}-policy-${{ env.DEPLOY_ENV }}\` ✅ Deployed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Cleanup Phase" >> $GITHUB_STEP_SUMMARY
-          echo "- **Policy Stack:** ✅ Destroyed (in reverse order)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Bucket Stack:** ✅ Destroyed (in reverse order)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Region:** \`${{ needs.get-config.outputs.aws-region }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** \`${{ env.DEPLOY_ENV }}\`" >> $GITHUB_STEP_SUMMARY
+  #     - name: Wait for bucket stack deletion to complete
+  #       if: env.BUCKET_STACK_EXISTS == 'true'
+  #       run: |
+  #         STACK_NAME="${{ github.event.repository.name }}-bucket-${{ needs.get-config.outputs.environment }}"
+  #         echo "Waiting for bucket stack deletion to complete..."
+  #         aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME" --region "${{ needs.get-config.outputs.aws-region }}"
+  #         echo "✅ Bucket stack deletion completed successfully"
 
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "## ❌ CloudFormation Template Lifecycle Failed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployment Phase Status:** ${{ needs.deploy-bucket.result }}, ${{ needs.deploy-policy.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Cleanup Phase Status:** ${{ needs.destroy-policy-stack.result }}, ${{ needs.destroy-bucket-stack.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Please check the logs above for error details." >> $GITHUB_STEP_SUMMARY
+  # display-full-cycle-summary:
+  #   name: Display Full Cycle Summary
+  #   needs: [get-config, deploy-bucket, deploy-policy, destroy-policy-stack, destroy-bucket-stack]
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   steps:
+  #     - name: Display full cycle summary
+  #       if: success()
+  #       run: |
+  #         echo "## ✅ CloudFormation Template Lifecycle Completed" >> $GITHUB_STEP_SUMMARY
+  #         echo "" >> $GITHUB_STEP_SUMMARY
+  #         echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+  #         echo "**Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+  #         echo "" >> $GITHUB_STEP_SUMMARY
+  #         echo "### Deployment Phase" >> $GITHUB_STEP_SUMMARY
+  #         echo "- **Bucket Stack:** \`${{ github.event.repository.name }}-bucket-${{ env.DEPLOY_ENV }}\` ✅ Deployed" >> $GITHUB_STEP_SUMMARY
+  #         echo "- **Policy Stack:** \`${{ github.event.repository.name }}-policy-${{ env.DEPLOY_ENV }}\` ✅ Deployed" >> $GITHUB_STEP_SUMMARY
+  #         echo "" >> $GITHUB_STEP_SUMMARY
+  #         echo "### Cleanup Phase" >> $GITHUB_STEP_SUMMARY
+  #         echo "- **Policy Stack:** ✅ Destroyed (in reverse order)" >> $GITHUB_STEP_SUMMARY
+  #         echo "- **Bucket Stack:** ✅ Destroyed (in reverse order)" >> $GITHUB_STEP_SUMMARY
+  #         echo "" >> $GITHUB_STEP_SUMMARY
+  #         echo "**Region:** \`${{ needs.get-config.outputs.aws-region }}\`" >> $GITHUB_STEP_SUMMARY
+  #         echo "**Environment:** \`${{ env.DEPLOY_ENV }}\`" >> $GITHUB_STEP_SUMMARY
+
+  #     - name: Notify on failure
+  #       if: failure()
+  #       run: |
+  #         echo "## ❌ CloudFormation Template Lifecycle Failed" >> $GITHUB_STEP_SUMMARY
+  #         echo "" >> $GITHUB_STEP_SUMMARY
+  #         echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+  #         echo "**Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+  #         echo "" >> $GITHUB_STEP_SUMMARY
+  #         echo "**Deployment Phase Status:** ${{ needs.deploy-bucket.result }}, ${{ needs.deploy-policy.result }}" >> $GITHUB_STEP_SUMMARY
+  #         echo "**Cleanup Phase Status:** ${{ needs.destroy-policy-stack.result }}, ${{ needs.destroy-bucket-stack.result }}" >> $GITHUB_STEP_SUMMARY
+  #         echo "" >> $GITHUB_STEP_SUMMARY
+  #         echo "Please check the logs above for error details." >> $GITHUB_STEP_SUMMARY
