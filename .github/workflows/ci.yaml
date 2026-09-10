@@ -1,58 +1,69 @@
 name: Deploy CloudFormation Stack
+description: Deploy CloudFormation S3 Bucket Stack
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: false
-        default: 'ci'
-        type: string
-  # push:
-  #   branches:
-  #     - main
-  #     - feature/**
-  #   paths:
-  #     - 'infra/**'
+  push:
+    branches:
+      - feature/**
+      - bug/**
+    paths:
+      - 'templates/**'
+      - .github/workflows/ci.yaml
 
 env:
-  DEPLOY_ENV: ${{ github.event.inputs.environment }}
-  # Allowed environment values: ci, devl, test, prod
-  # To deploy to a different environment, update DEPLOY_ENV above
+  ENVIRONMENT: devl
+  OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME  }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  CFN_TEMPLATES_S3_BUCKET: ${{ vars.CFN_TEMPLATES_S3_BUCKET }}
+  S3_BUCKET_STACK_NAME: s3-bucket-stack
+  S3_BUCKET_POLICY_STACK_NAME: s3-bucket-policy-stack
+
+permissions:
+  actions: write
+  contents: read
+  id-token: write
 
 jobs:
   get-config:
-    name: Get Environment Configuration
+    name: Get Env Config
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
-    # outputs:
-      # environment: ${{ env.DEPLOY_ENV }}
-      # aws-region: ${{ steps.config.outputs.aws-region }}
-      # aws-account-id: ${{ steps.config.outputs.aws-account-id }}
-      # oidc-role-name: ${{ steps.config.outputs.oidc-role-name }}
-      # cfn-templates-s3-bucket: ${{ steps.config.outputs.cfn-templates-s3-bucket }}
+    environment: devl
+    outputs:
+      environment: ${{ steps.config.outputs.environment }}
+      aws-region: ${{ steps.config.outputs.aws-region }}
+      aws-account-id: ${{ steps.config.outputs.aws-account-id }}
+      oidc-role-name: ${{ steps.config.outputs.oidc-role-name }}
+      cfn-templates-s3-bucket: ${{ steps.config.outputs.cfn-templates-s3-bucket }}
+      cfn-s3-bucket-stack: ${{ steps.config.outputs.cfn-s3-bucket-stack }}
+      cfn-s3-bucket-policy-stack: ${{ steps.config.outputs.cfn-s3-bucket-policy-stack }}
     steps:
       - id: config
         run: |
           echo "Debug: Getting environment configuration"
-          echo "AWS_REGION: ${{ vars.AWS_REGION }}"
-          echo "AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}"
-          echo "OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME }}"
-          echo "CFN_TEMPLATES_S3_BUCKET: ${{ vars.CFN_TEMPLATES_S3_BUCKET }}"
-          # echo "aws-region=${{ vars.AWS_REGION }}" >> $GITHUB_OUTPUT
-          # echo "aws-account-id=${{ vars.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
-          # echo "oidc-role-name=${{ vars.OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
-          # echo "cfn-templates-s3-bucket=${{ vars.CFN_TEMPLATES_S3_BUCKET }}" >> $GITHUB_OUTPUT
+          echo "AWS_REGION: ${{ env.AWS_REGION }}"
+          echo "AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}"
+          echo "OIDC_ROLE_NAME: ${{ env.OIDC_ROLE_NAME }}"
+          {
+            echo "environment=${{ env.ENVIRONMENT }}"
+            echo "aws-region=${{ env.AWS_REGION }}"
+            echo "aws-account-id=${{ env.AWS_ACCOUNT_ID }}"
+            echo "oidc-role-name=${{ env.OIDC_ROLE_NAME }}"
+            echo "cfn-templates-s3-bucket=${{ env.CFN_TEMPLATES_S3_BUCKET }}"
+            echo "cfn-s3-bucket-stack=${{ env.S3_BUCKET_STACK_NAME }}"
+            echo "cfn-s3-bucket-policy-stack=${{ env.S3_BUCKET_POLICY_STACK_NAME }}"
+          } >> "$GITHUB_OUTPUT"
 
-  # deploy:
-  #   needs: get-config
-  #   uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.0.0
-  #   with:
-  #     environment: ${{ needs.get-config.outputs.environment }}
-  #     aws-region: ${{ needs.get-config.outputs.aws-region }}
-  #     aws-account-id: ${{ needs.get-config.outputs.aws-account-id }}
-  #     oidc-role-name: ${{ needs.get-config.outputs.oidc-role-name }}
-  #     cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-templates-s3-bucket }}
-  #     stack-name: ${{ github.event.repository.name }}
-  #     template-file: infra/template.yaml
-  #     parameters-file: infra/parameters.json
+  deploy-s3-bucket-stack:
+    needs: get-config
+    uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.1.0
+    with:
+      environment: ${{ needs.get-config.outputs.environment }}
+      aws-region: ${{ needs.get-config.outputs.aws-region }}
+      aws-account-id: ${{ needs.get-config.outputs.aws-account-id }}
+      oidc-role-name: ${{ needs.get-config.outputs.oidc-role-name }}
+      cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-templates-s3-bucket }}
+      stack-name: ${{ needs.get-config.outputs.cfn-s3-bucket-stack }}
+      template-file: templates/s3-bucket.yaml
+      parameters-file: templates/parameters.json
