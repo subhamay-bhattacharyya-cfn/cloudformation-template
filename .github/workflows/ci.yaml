@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   get-config:
-    name: Get Environment Configuration
+    name: Get Env Config
     runs-on: ubuntu-latest
     environment: devl
     outputs:
