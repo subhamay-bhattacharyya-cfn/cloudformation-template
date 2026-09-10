@@ -25,7 +25,7 @@ permissions:
   id-token: write
 
 jobs:
-  get-config:
+  config:
     name: Get Environment Configuration
     runs-on: ubuntu-latest
     environment: devl
@@ -54,9 +54,8 @@ jobs:
             echo "cfn-s3-bucket-policy-stack=${{ env.S3_BUCKET_POLICY_STACK_NAME }}"
           } >> "$GITHUB_OUTPUT"
 
-  deploy-s3-bucket-stack:
-    needs: get-config
-    # name: Deploy Stack - S3 Bucket 
+  deploy:
+    needs: config
     uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@bug/GHA-0008-update-github-actions-to
     with:
       environment: ${{ needs.get-config.outputs.environment }}
