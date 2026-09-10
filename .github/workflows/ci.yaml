@@ -1,4 +1,5 @@
 name: Deploy CloudFormation Stack
+description: Deploy CloudFormation S3 Bucket Stack
 
 on:
   workflow_dispatch:
