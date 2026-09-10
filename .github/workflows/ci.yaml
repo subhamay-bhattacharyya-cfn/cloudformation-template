@@ -18,13 +18,12 @@ env:
   CFN_TEMPLATES_S3_BUCKET: ${{ vars.CFN_TEMPLATES_S3_BUCKET }}
   S3_BUCKET_STACK_NAME: s3-bucket-stack
   S3_BUCKET_POLICY_STACK_NAME: s3-bucket-policy-stack
-  ENVIRONMENT: ci
 
 jobs:
   get-config:
     name: Get Environment Configuration
     runs-on: ubuntu-latest
-    environment: ci
+    environment: devl
     outputs:
       environment: ${{ steps.config.outputs.environment }}
       aws-region: ${{ steps.config.outputs.aws-region }}
@@ -57,7 +56,7 @@ jobs:
       actions: write
       contents: read
       id-token: write
-    uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@bug/GHA-0006-fix-cloudformation-parame
+    uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.1.0  
     with:
       environment: ${{ needs.get-config.outputs.environment }}
       aws-region: ${{ needs.get-config.outputs.aws-region }}
