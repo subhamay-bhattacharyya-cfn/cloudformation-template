@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/compare/v1.0.0...v1.1.0) (2026-09-14)
+
+
+### Features
+
+* add setup AWS environments workflow ([7152f9d](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/commit/7152f9d0fb16baa2c961db2f1f9723eaee0b1c25))
+
 # 1.0.0 (2026-09-10)
 
 
