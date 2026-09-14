@@ -38,7 +38,7 @@ dist/
 *.tgz
 
 # Misc
-.env
-.env.local
-.env.production
-.env.test
+# .env
+# .env.local
+# .env.production
+# .env.test
