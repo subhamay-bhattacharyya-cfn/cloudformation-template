@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/compare/v1.1.0...v1.2.0) (2026-09-14)
+
+
+### Features
+
+* add environments configuration and update .gitignore ([ab25757](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/commit/ab25757cbfad78875001d27e06b35fbefbffcffe))
+
 # [1.1.0](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/compare/v1.0.0...v1.1.0) (2026-09-14)
 
 
