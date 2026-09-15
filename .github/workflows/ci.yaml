@@ -32,11 +32,21 @@ jobs:
       - name: Read environment-specific variables
         id: set-env
         run: |
-          echo "environment=${{ env.AWS_ENVIRONMENT }}" >> $GITHUB_OUTPUT
+          echo "environment=devl" >> $GITHUB_OUTPUT
           echo "aws-region=${{ env.AWS_REGION }}" >> $GITHUB_OUTPUT
           echo "aws-account-id=${{ env.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
           echo "oidc-role-name=${{ env.AWS_ROLE_ARN }}" >> $GITHUB_OUTPUT
           echo "s3-bucket=${{ env.TF_STATE_BUCKET_ARN }}" >> $GITHUB_OUTPUT
+
+          echo "## Environment Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Variable | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | devl |" >> $GITHUB_STEP_SUMMARY
+          echo "| AWS Region | ${{ env.AWS_REGION }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AWS Account ID | ${{ env.AWS_ACCOUNT_ID }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OIDC Role ARN | ${{ env.AWS_ROLE_ARN }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| S3 Bucket ARN | ${{ env.TF_STATE_BUCKET_ARN }} |" >> $GITHUB_STEP_SUMMARY
 
   deploy-s3-bucket-stack:
     name: Deploy S3 Bucket Stack
