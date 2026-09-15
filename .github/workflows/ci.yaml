@@ -11,14 +11,6 @@ on:
       - 'templates/**'
       - .github/workflows/ci.yaml
 
-env: 
-  ENVIRONMENT: devl
-  OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME  }}
-  AWS_REGION: ${{ vars.AWS_REGION }}
-  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-  CFN_TEMPLATES_S3_BUCKET: ${{ vars.CFN_TEMPLATES_S3_BUCKET }}
-  # S3_BUCKET_STACK_NAME: s3-bucket-stack
-  # S3_BUCKET_POLICY_STACK_NAME: s3-bucket-policy-stack
 
 permissions:
   actions: write
@@ -27,15 +19,27 @@ permissions:
 
 jobs:
   deploy-s3-bucket-stack:
-    # environment: devl
-    # runs-on: ubuntu-latest
-    uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.1.0
-    with:
-      environment: devl
-      aws-region: ${{ vars.AWS_REGION }}
-      aws-account-id: ${{ vars.AWS_ACCOUNT_ID }}
-      oidc-role-name: ${{ vars.OIDC_ROLE_NAME }}
-      cfn-templates-s3-bucket: ${{ vars.CFN_TEMPLATES_S3_BUCKET }}
-      stack-name: s3-bucket-stack
-      template-file: templates/s3-bucket.yaml
-      parameters-file: templates/parameters.json
+    environment: devl
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract AWS values from environment ARNs
+        id: extract_values
+        run: |
+          ROLE_NAME=$(echo "${{ env.AWS_ROLE_ARN }}" | cut -d'/' -f2)
+          ACCOUNT_ID=$(echo "${{ env.AWS_ROLE_ARN }}" | cut -d':' -f5)
+          BUCKET_NAME=$(echo "${{ env.TF_STATE_BUCKET_ARN }}" | cut -d':' -f6)
+          echo "role-name=${ROLE_NAME}" >> $GITHUB_OUTPUT
+          echo "account-id=${ACCOUNT_ID}" >> $GITHUB_OUTPUT
+          echo "bucket-name=${BUCKET_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Call CloudFormation deploy workflow
+        uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.1.0
+        with:
+          environment: devl
+          aws-region: ${{ env.AWS_REGION }}
+          aws-account-id: ${{ steps.extract_values.outputs.account-id }}
+          oidc-role-name: ${{ steps.extract_values.outputs.role-name }}
+          cfn-templates-s3-bucket: ${{ steps.extract_values.outputs.bucket-name }}
+          stack-name: s3-bucket-stack
+          template-file: templates/s3-bucket.yaml
+          parameters-file: templates/parameters.json
