@@ -35,7 +35,7 @@ jobs:
           echo "environment=devl" >> $GITHUB_OUTPUT
           echo "aws-region=${{ vars.AWS_REGION }}" >> $GITHUB_OUTPUT
           echo "aws-account-id=270453428528" >> $GITHUB_OUTPUT
-          echo "oidc-role-name=${{ vars.AWS_ROLE_ARN }}" >> $GITHUB_OUTPUT
+          echo "oidc-role-name=GitHubActionsOIDCRole" >> $GITHUB_OUTPUT
           echo "s3-bucket=${{ vars.TF_STATE_BUCKET_ARN }}" >> $GITHUB_OUTPUT
 
           echo "## Environment Configuration" >> $GITHUB_STEP_SUMMARY
@@ -45,7 +45,7 @@ jobs:
           echo "| Environment | devl |" >> $GITHUB_STEP_SUMMARY
           echo "| AWS Region | ${{ vars.AWS_REGION }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AWS Account ID | 270453428528 |" >> $GITHUB_STEP_SUMMARY
-          echo "| OIDC Role ARN | ${{ vars.AWS_ROLE_ARN }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OIDC Role Name | GitHubActionsOIDCRole |" >> $GITHUB_STEP_SUMMARY
           echo "| S3 Bucket ARN | ${{ vars.TF_STATE_BUCKET_ARN }} |" >> $GITHUB_STEP_SUMMARY
 
   deploy-s3-bucket-stack:
