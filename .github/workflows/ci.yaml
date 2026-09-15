@@ -30,30 +30,23 @@ jobs:
     name: Get Env Config
     runs-on: ubuntu-latest
     environment: devl
-    outputs:
-      environment: ${{ steps.config.outputs.environment }}
-      aws-region: ${{ steps.config.outputs.aws-region }}
-      aws-account-id: ${{ steps.config.outputs.aws-account-id }}
-      oidc-role-name: ${{ steps.config.outputs.oidc-role-name }}
-      cfn-templates-s3-bucket: ${{ steps.config.outputs.cfn-templates-s3-bucket }}
-      cfn-s3-bucket-stack: ${{ steps.config.outputs.cfn-s3-bucket-stack }}
-      cfn-s3-bucket-policy-stack: ${{ steps.config.outputs.cfn-s3-bucket-policy-stack }}
     steps:
       - id: config
         run: |
-          echo "Debug: Getting environment configuration"
-          echo "AWS_REGION: ${{ env.AWS_REGION }}"
-          echo "AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}"
-          echo "OIDC_ROLE_NAME: ${{ env.OIDC_ROLE_NAME }}"
+          # Write configuration summary to GitHub step summary
           {
-            echo "environment=${{ env.ENVIRONMENT }}"
-            echo "aws-region=${{ env.AWS_REGION }}"
-            echo "aws-account-id=${{ env.AWS_ACCOUNT_ID }}"
-            echo "oidc-role-name=${{ env.OIDC_ROLE_NAME }}"
-            echo "cfn-templates-s3-bucket=${{ env.CFN_TEMPLATES_S3_BUCKET }}"
-            echo "cfn-s3-bucket-stack=${{ env.S3_BUCKET_STACK_NAME }}"
-            echo "cfn-s3-bucket-policy-stack=${{ env.S3_BUCKET_POLICY_STACK_NAME }}"
-          } >> "$GITHUB_OUTPUT"
+            echo "## Environment Configuration"
+            echo ""
+            echo "| Variable | Value |"
+            echo "|----------|-------|"
+            echo "| Environment | ${{ env.ENVIRONMENT }} |"
+            echo "| AWS Region | ${{ env.AWS_REGION }} |"
+            echo "| AWS Account ID | ${{ env.AWS_ACCOUNT_ID }} |"
+            echo "| OIDC Role Name | ${{ env.OIDC_ROLE_NAME }} |"
+            echo "| CFN Templates S3 Bucket | ${{ env.CFN_TEMPLATES_S3_BUCKET }} |"
+            echo "| S3 Bucket Stack Name | ${{ env.S3_BUCKET_STACK_NAME }} |"
+            echo "| S3 Bucket Policy Stack Name | ${{ env.S3_BUCKET_POLICY_STACK_NAME }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # deploy-s3-bucket-stack:
   #   needs: get-config
