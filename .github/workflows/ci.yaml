@@ -11,14 +11,6 @@ on:
       - 'templates/**'
       - .github/workflows/ci.yaml
 
-env:
-  ENVIRONMENT: devl
-  OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME  }}
-  AWS_REGION: ${{ vars.AWS_REGION }}
-  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-  CFN_TEMPLATES_S3_BUCKET: ${{ vars.CFN_TEMPLATES_S3_BUCKET }}
-  S3_BUCKET_STACK_NAME: s3-bucket-stack
-  S3_BUCKET_POLICY_STACK_NAME: s3-bucket-policy-stack
 
 permissions:
   actions: write
@@ -26,44 +18,47 @@ permissions:
   id-token: write
 
 jobs:
-  get-config:
-    name: Get Env Config
+  setup-environment:
+    name: Setup Environment Variables
     runs-on: ubuntu-latest
     environment: devl
     outputs:
-      environment: ${{ steps.config.outputs.environment }}
-      aws-region: ${{ steps.config.outputs.aws-region }}
-      aws-account-id: ${{ steps.config.outputs.aws-account-id }}
-      oidc-role-name: ${{ steps.config.outputs.oidc-role-name }}
-      cfn-templates-s3-bucket: ${{ steps.config.outputs.cfn-templates-s3-bucket }}
-      cfn-s3-bucket-stack: ${{ steps.config.outputs.cfn-s3-bucket-stack }}
-      cfn-s3-bucket-policy-stack: ${{ steps.config.outputs.cfn-s3-bucket-policy-stack }}
+      environment: ${{ steps.set-env.outputs.environment }}
+      aws-region: ${{ steps.set-env.outputs.aws-region }}
+      aws-account-id: ${{ steps.set-env.outputs.aws-account-id }}
+      oidc-role-name: ${{ steps.set-env.outputs.oidc-role-name }}
+      s3-bucket: ${{ steps.set-env.outputs.s3-bucket }}
     steps:
-      - id: config
+      - name: Read environment-specific variables
+        id: set-env
         run: |
-          echo "Debug: Getting environment configuration"
-          echo "AWS_REGION: ${{ env.AWS_REGION }}"
-          echo "AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}"
-          echo "OIDC_ROLE_NAME: ${{ env.OIDC_ROLE_NAME }}"
-          {
-            echo "environment=${{ env.ENVIRONMENT }}"
-            echo "aws-region=${{ env.AWS_REGION }}"
-            echo "aws-account-id=${{ env.AWS_ACCOUNT_ID }}"
-            echo "oidc-role-name=${{ env.OIDC_ROLE_NAME }}"
-            echo "cfn-templates-s3-bucket=${{ env.CFN_TEMPLATES_S3_BUCKET }}"
-            echo "cfn-s3-bucket-stack=${{ env.S3_BUCKET_STACK_NAME }}"
-            echo "cfn-s3-bucket-policy-stack=${{ env.S3_BUCKET_POLICY_STACK_NAME }}"
-          } >> "$GITHUB_OUTPUT"
+          echo "environment=${{ vars.AWS_ENVIRONMENT }}" >> $GITHUB_OUTPUT
+          echo "aws-region=${{ vars.AWS_REGION }}" >> $GITHUB_OUTPUT
+          echo "aws-account-id=${{ vars.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+          echo "oidc-role-name=${{ vars.AWS_OIDC_ROLE_NAME }}" >> $GITHUB_OUTPUT
+          echo "s3-bucket=${{ vars.CFN_NESTED_TEMPLATES_S3_BUCKET_NAME }}" >> $GITHUB_OUTPUT
+
+          echo "## Environment Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Variable | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ vars.AWS_ENVIRONMENT }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AWS Region | ${{ vars.AWS_REGION }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AWS Account ID | ${{ vars.AWS_ACCOUNT_ID }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AWS OIDC Role Name | ${{ vars.AWS_OIDC_ROLE_NAME }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Nested Templates S3 Bucket Name | ${{ vars.CFN_NESTED_TEMPLATES_S3_BUCKET_NAME }} |" >> $GITHUB_STEP_SUMMARY
 
   deploy-s3-bucket-stack:
-    needs: get-config
+    name: Deploy S3 Bucket Stack
+    needs: setup-environment
     uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.1.0
     with:
-      environment: ${{ needs.get-config.outputs.environment }}
-      aws-region: ${{ needs.get-config.outputs.aws-region }}
-      aws-account-id: ${{ needs.get-config.outputs.aws-account-id }}
-      oidc-role-name: ${{ needs.get-config.outputs.oidc-role-name }}
-      cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-templates-s3-bucket }}
-      stack-name: ${{ needs.get-config.outputs.cfn-s3-bucket-stack }}
-      template-file: templates/s3-bucket.yaml
+      environment: ${{ needs.setup-environment.outputs.environment }}
+      concurrency-group: ${{ github.workflow }}-${{ needs.setup-environment.outputs.environment }}
+      aws-region: ${{ needs.setup-environment.outputs.aws-region }}
+      aws-account-id: ${{ needs.setup-environment.outputs.aws-account-id }}
+      oidc-role-name: ${{ vars.AWS_OIDC_ROLE_NAME }}
+      cfn-templates-s3-bucket: ${{ vars.CFN_NESTED_TEMPLATES_S3_BUCKET_NAME }}
+      stack-name: s3-bucket-stack
       parameters-file: templates/parameters.json
+      template-file: templates/s3-bucket.yaml
