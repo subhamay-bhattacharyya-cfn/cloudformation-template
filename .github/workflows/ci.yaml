@@ -28,4 +28,4 @@ jobs:
       cfn-templates-s3-bucket: subhamay-cfn-nested-templates-270453428528-devl-us-east-1
       stack-name: s3-bucket-stack
       template-file: templates/s3-bucket.yaml
-      parameters-file: parameters/dev.json
+      parameters-file: templates/parameters.json
