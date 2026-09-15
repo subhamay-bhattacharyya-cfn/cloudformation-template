@@ -57,8 +57,8 @@ jobs:
       concurrency-group: ${{ github.workflow }}-${{ needs.setup-environment.outputs.environment }}
       aws-region: ${{ needs.setup-environment.outputs.aws-region }}
       aws-account-id: ${{ needs.setup-environment.outputs.aws-account-id }}
-      oidc-role-name: ${{ needs.setup-environment.outputs.oidc-role-name }}
-      cfn-templates-s3-bucket: ${{ vars.CFN_NESTED_TEMPLATES_S3_BUCKET_NAME }} ##${{ needs.setup-environment.outputs.s3-bucket }}
+      oidc-role-name: ${{ vars.AWS_OIDC_ROLE_NAME }} ##${{ needs.setup-environment.outputs.oidc-role-name }}
+      cfn-templates-s3-bucket: ${{ vars.CFN_NESTED_TEMPLATES_S3_BUCKET_NAME }}
       stack-name: s3-bucket-stack
       parameters-file: templates/parameters.json
       template-file: templates/s3-bucket.yaml
