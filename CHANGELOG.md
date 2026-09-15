@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/compare/v1.2.0...v1.2.1) (2026-09-15)
+
+
+### Bug Fixes
+
+* update setup-environments workflow to use version 1.3.0 ([472381b](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/commit/472381b98cbf78af034e827d7000bf8aa06f39c8))
+
 # [1.2.0](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/compare/v1.1.0...v1.2.0) (2026-09-14)
 
 
