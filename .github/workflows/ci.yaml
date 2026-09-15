@@ -39,13 +39,11 @@ jobs:
             echo ""
             echo "| Variable | Value |"
             echo "|----------|-------|"
-            echo "| Environment | ${{ env.ENVIRONMENT }} |"
+            echo "| AWS Environment | ${{ env.AWS_ENVIRONMENT }} |"
             echo "| AWS Region | ${{ env.AWS_REGION }} |"
-            echo "| AWS Account ID | ${{ env.AWS_ACCOUNT_ID }} |"
-            echo "| OIDC Role Name | ${{ env.OIDC_ROLE_NAME }} |"
-            echo "| CFN Templates S3 Bucket | ${{ env.CFN_TEMPLATES_S3_BUCKET }} |"
-            echo "| S3 Bucket Stack Name | ${{ env.S3_BUCKET_STACK_NAME }} |"
-            echo "| S3 Bucket Policy Stack Name | ${{ env.S3_BUCKET_POLICY_STACK_NAME }} |"
+            echo "| AWS Role ARN | ${{ env.AWS_ROLE_ARN }} |"
+            echo "| S3 KMS Key Alias | ${{ env.S3_KMS_KEY_ALIAS }} |"
+            echo "| TF State Bucket ARN | ${{ env.TF_STATE_BUCKET_ARN }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # deploy-s3-bucket-stack:
