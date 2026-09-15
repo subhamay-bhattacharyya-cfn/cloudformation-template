@@ -11,6 +11,8 @@ on:
       - 'templates/**'
       - .github/workflows/ci.yaml
 
+env: 
+  ENVIRONMENT: devl
 # env:
 #   ENVIRONMENT: devl
 #   OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME  }}
@@ -26,41 +28,16 @@ permissions:
   id-token: write
 
 jobs:
-  get-config:
-    name: Get Env Config
-    runs-on: ubuntu-latest
-    environment: devl
-    env:
-      AWS_ENVIRONMENT: ${{ vars.AWS_ENVIRONMENT }}
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
-      S3_KMS_KEY_ALIAS: ${{ vars.S3_KMS_KEY_ALIAS }}
-      TF_STATE_BUCKET_ARN: ${{ vars.TF_STATE_BUCKET_ARN }}
-    steps:
-      - id: config
-        run: |
-          # Write configuration summary to GitHub step summary
-          {
-            echo "## Environment Configuration"
-            echo ""
-            echo "| Variable | Value |"
-            echo "|----------|-------|"
-            echo "| AWS Environment | ${{ env.AWS_ENVIRONMENT }} |"
-            echo "| AWS Region | ${{ env.AWS_REGION }} |"
-            echo "| AWS Role ARN | ${{ env.AWS_ROLE_ARN }} |"
-            echo "| S3 KMS Key Alias | ${{ env.S3_KMS_KEY_ALIAS }} |"
-            echo "| TF State Bucket ARN | ${{ env.TF_STATE_BUCKET_ARN }} |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  # deploy-s3-bucket-stack:
-  #   needs: get-config
-  #   uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.1.0
-  #   with:
-  #     environment: ${{ needs.get-config.outputs.environment }}
-  #     aws-region: ${{ needs.get-config.outputs.aws-region }}
-  #     aws-account-id: ${{ needs.get-config.outputs.aws-account-id }}
-  #     oidc-role-name: ${{ needs.get-config.outputs.oidc-role-name }}
-  #     cfn-templates-s3-bucket: ${{ needs.get-config.outputs.cfn-templates-s3-bucket }}
-  #     stack-name: ${{ needs.get-config.outputs.cfn-s3-bucket-stack }}
-  #     template-file: templates/s3-bucket.yaml
-  #     parameters-file: templates/parameters.json
+  deploy-s3-bucket-stack:
+    # environment: devl
+    # runs-on: ubuntu-latest
+    uses: subhamay-bhattacharyya-gha/cloudformation-deploy-wf/.github/workflows/cfn-deploy.yaml@v1.1.0
+    with:
+      environment: devl
+      aws-region: ${{ vars.AWS_REGION }}
+      aws-account-id: ${{ vars.AWS_ACCOUNT_ID }}
+      oidc-role-name: ${{ vars.OIDC_ROLE_NAME }}
+      cfn-templates-s3-bucket: ${{ vars.CFN_TEMPLATES_S3_BUCKET }}
+      stack-name: s3-bucket-stack
+      template-file: templates/s3-bucket.yaml
+      parameters-file: templates/parameters.json
