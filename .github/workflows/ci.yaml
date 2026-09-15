@@ -30,6 +30,12 @@ jobs:
     name: Get Env Config
     runs-on: ubuntu-latest
     environment: devl
+    env:
+      AWS_ENVIRONMENT: ${{ vars.AWS_ENVIRONMENT }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      S3_KMS_KEY_ALIAS: ${{ vars.S3_KMS_KEY_ALIAS }}
+      TF_STATE_BUCKET_ARN: ${{ vars.TF_STATE_BUCKET_ARN }}
     steps:
       - id: config
         run: |
