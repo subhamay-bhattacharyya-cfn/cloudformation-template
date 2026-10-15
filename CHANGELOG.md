@@ -1,3 +1,16 @@
+# [1.3.0](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/compare/v1.2.1...v1.3.0) (2026-10-15)
+
+
+### Bug Fixes
+
+* restore push and pull_request triggers in CI workflow ([6a35f23](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/commit/6a35f238c6ce5d88838cc3335117ae04d2841ae7))
+
+
+### Features
+
+* add CloudFormation templates and parameters for S3 bucket deployment ([d8f357c](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/commit/d8f357c59ed29410e0985d160b7fdea749b76624))
+* update CloudFormation templates and parameters for S3 bucket configuration ([1a679e6](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/commit/1a679e678f4ec624334084215bfa4bc99a559746))
+
 ## [1.2.1](https://github.com/subhamay-bhattacharyya-cfn/cloudformation-template/compare/v1.2.0...v1.2.1) (2026-09-15)
 
 
